@@ -44,6 +44,20 @@ function MetricCell({ value, unit, label, accent = false }) {
   );
 }
 
+function NetworkBars({ value }) {
+  // Determine how many bars should be lit based on value (0-100)
+  const activeBars = value >= 75 ? 4 : value >= 50 ? 3 : value >= 25 ? 2 : 1;
+
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+      <rect x="2" y="10" width="2" height="4" rx="1" fill="currentColor" opacity={activeBars >= 1 ? 1 : 0.3} />
+      <rect x="5" y="8" width="2" height="6" rx="1" fill="currentColor" opacity={activeBars >= 2 ? 1 : 0.3} />
+      <rect x="8" y="5" width="2" height="9" rx="1" fill="currentColor" opacity={activeBars >= 3 ? 1 : 0.3} />
+      <rect x="11" y="2" width="2" height="12" rx="1" fill="currentColor" opacity={activeBars >= 4 ? 1 : 0.3} />
+    </svg>
+  );
+}
+
 function StatRow({ icon: Icon, value, unit, label, date }) {
   return (
     <div className="flex items-start gap-3 py-3">
@@ -112,26 +126,17 @@ export default function VanInfoSidebar({ van, onClose, onViewOnMap }) {
                       (van.battery_percentage ?? 0) > 50
                         ? 'text-emerald-500'
                         : (van.battery_percentage ?? 0) > 20
-                        ? 'text-amber-500'
-                        : 'text-red-500'
+                          ? 'text-amber-500'
+                          : 'text-red-500'
                     )}
                   />
                   <span className="text-xs text-muted-foreground">
                     {van.battery_percentage ?? '-'}%
                   </span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Signal
-                    className={cn(
-                      'w-4 h-4',
-                      van.network_status === 'strong'
-                        ? 'text-foreground'
-                        : van.network_status === 'good'
-                        ? 'text-muted-foreground'
-                        : 'text-muted-foreground/30'
-                    )}
-                  />
-                  <span className="text-[10px] text-muted-foreground">Network</span>
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <NetworkBars value={van.netSignal || 0} />
+                  {/* <span className="text-[10px]">Network</span> */}
                 </div>
               </div>
             </div>
@@ -157,7 +162,7 @@ export default function VanInfoSidebar({ van, onClose, onViewOnMap }) {
                     {lastSeenText}
                   </span>
                   <span className="text-[11px] text-muted-foreground/40">·</span>
-                  <button 
+                  <button
                     onClick={onViewOnMap}
                     className="text-[11px] text-blue-500 hover:text-blue-600 underline underline-offset-2"
                   >
@@ -201,7 +206,13 @@ export default function VanInfoSidebar({ van, onClose, onViewOnMap }) {
             <Separator />
             <StatRow icon={Gauge} value={van.vehicle_speed} unit="km/h" label="Vehicle speed" date={dateLabel} />
             <Separator />
-            <StatRow icon={Route} value={van.total_distance} unit="km" label="Total distance moved" date={dateLabel} />
+            <StatRow
+              icon={Route}
+              value={van.total_distance != null ? parseFloat((van.total_distance / 1000).toFixed(2)) : null}
+              unit="km"
+              label="Total distance moved"
+              date={dateLabel}
+            />
           </div>
 
           {/* Bottom spacing */}
