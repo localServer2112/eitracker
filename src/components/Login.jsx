@@ -44,9 +44,9 @@ export default function Login({ onLogin }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 flex-col gap-4">
-      <Card className="w-full max-w-sm">
+      <Card className="w-full max-w-sm border-[#1a1a1a]/10">
         <CardHeader>
-          <CardTitle className="text-2xl tracking-tight">Admin Login</CardTitle>
+          <CardTitle className="text-2xl tracking-tight text-[#1a1a1a]">Admin Login</CardTitle>
           <CardDescription>
             Enter your credentials to access the realtime tracker.
           </CardDescription>
@@ -59,6 +59,7 @@ export default function Login({ onLogin }) {
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                className="focus-visible:ring-[#1a1a1a]"
                 required
               />
             </div>
@@ -68,13 +69,14 @@ export default function Login({ onLogin }) {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="focus-visible:ring-[#1a1a1a]"
                 required
               />
             </div>
             {error && <p className="text-destructive text-sm font-medium">{error}</p>}
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-[#1a1a1a] text-white hover:bg-[#1a1a1a]/90"
               disabled={isLoading}
             >
               {isLoading ? 'Logging in...' : 'Sign In'}
