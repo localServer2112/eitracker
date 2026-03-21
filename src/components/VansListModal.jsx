@@ -21,8 +21,8 @@ function MiniMetric({ label, value, unit }) {
   const isNull = value === null || value === undefined;
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] text-muted-foreground leading-none">{label}</span>
-      <span className={cn('text-xs font-semibold leading-none', isNull ? 'text-muted-foreground/40' : 'text-foreground')}>
+      <span className="text-[10px] text-muted-foreground leading-none ">{label}</span>
+      <span className={cn('text-sm font-semibold leading-none py-2', isNull ? 'text-muted-foreground/40' : 'text-foreground')}>
         {isNull ? '-' : value}
         {!isNull && unit && <span className="text-muted-foreground font-normal">{unit}</span>}
       </span>
@@ -32,8 +32,8 @@ function MiniMetric({ label, value, unit }) {
 
 function StatusIndicator({ status, lastSeen }) {
   const configs = {
-    online:    { variant: 'success', label: 'Online' },
-    offline:   { variant: 'danger', label: 'Offline' },
+    online: { variant: 'success', label: 'Online' },
+    offline: { variant: 'danger', label: 'Offline' },
     attention: { variant: 'warning', label: 'Attention' },
   };
   const c = configs[status] || configs.offline;
@@ -128,7 +128,7 @@ export default function VansListModal({ vans, onSelectVan, onSwitchToMap }) {
                   >
                     {/* Icon */}
                     <div className="w-10 h-10 flex items-center justify-center shrink-0">
-                      <img 
+                      <img
                         src={(van.status === 'online' || van.status === 'attention') ? vanActiveImg : vanDefaultImg}
                         alt="van"
                         className="w-full h-full object-contain"

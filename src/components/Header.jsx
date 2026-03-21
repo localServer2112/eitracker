@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Fish, ChevronDown, Bell } from 'lucide-react';
+import { Fish, ChevronDown, Bell, LogOut } from 'lucide-react';
 
 const TABS = [
   { id: 'maps', label: 'Maps' },
@@ -7,7 +7,7 @@ const TABS = [
   { id: 'notification', label: 'Notification' },
 ];
 
-export default function Header({ activeTab, onTabChange }) {
+export default function Header({ activeTab, onTabChange, onLogout }) {
   return (
     <header className="relative z-50 flex items-center justify-between px-6 h-[64px] bg-[#111111] border-b border-white/5">
       {/* Brand */}
@@ -41,6 +41,13 @@ export default function Header({ activeTab, onTabChange }) {
         <button className="relative text-gray-400 hover:text-gray-200 transition-colors cursor-pointer">
           <Bell className="w-[18px] h-[18px]" />
           <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-[#111]" />
+        </button>
+        <button 
+          onClick={onLogout}
+          className="text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
+          title="Logout"
+        >
+          <LogOut className="w-[18px] h-[18px]" />
         </button>
         <div className="flex items-center gap-2 cursor-pointer group">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 flex items-center justify-center ring-2 ring-white/10 group-hover:ring-white/25 transition-all overflow-hidden">

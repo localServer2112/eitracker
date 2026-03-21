@@ -5,23 +5,39 @@ import MapView from './components/MapView';
 import VansListModal from './components/VansListModal';
 import NotificationTab from './components/NotificationTab';
 import { useSensorDataRealtime } from './hooks/useSensorDataRealtime';
-
-const SSE_TOKEN = import.meta.env.VITE_SSE_TOKEN || null;
+import Login from './components/Login';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('maps');
   const [selectedVan, setSelectedVan] = useState(null);
+  
+  // Manage auth state
+  const [token, setToken] = useState(() => localStorage.getItem('auth_token') || null);
 
-  const { vans, connected } = useSensorDataRealtime(SSE_TOKEN);
+  const handleLogin = (newToken) => {
+    localStorage.setItem('auth_token', newToken);
+    setToken(newToken);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    setToken(null);
+  };
+
+  const { vans, connected } = useSensorDataRealtime(token);
 
   // Keep selectedVan synced with latest data
   const currentSelectedVan = selectedVan
     ? vans[selectedVan.vehicle_plate_number] || selectedVan
     : null;
 
+  if (!token) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <div className="flex flex-col h-full w-full bg-muted/30">
-      <Header activeTab={activeTab} onTabChange={setActiveTab} />
+      <Header activeTab={activeTab} onTabChange={setActiveTab} onLogout={handleLogout} />
 
       <main className="flex-1 relative overflow-hidden">
         {/* Map always renders behind overlays */}
@@ -43,7 +59,7 @@ export default function App() {
       </main>
 
       {/* SSE indicator */}
-      {SSE_TOKEN && (
+      {token && (
         <div
           className={cn(
             'fixed bottom-4 left-4 z-[9999] flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium shadow-lg backdrop-blur-sm border',
