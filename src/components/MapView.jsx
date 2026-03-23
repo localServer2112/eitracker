@@ -1,13 +1,15 @@
-import { useEffect } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, useMap, Rectangle } from 'react-leaflet';
+import L from 'leaflet';
 import VanMarker from './VanMarker';
 import VanInfoSidebar from './VanInfoSidebar';
 
 const IBADAN_CENTER = [7.3964, 3.9167];
 const DEFAULT_ZOOM = 14;
 
-function MapController({ selectedVan }) {
+function MapController({ selectedVan, vanList }) {
   const map = useMap();
+  const [bounds, setBounds] = useState(null);
 
   useEffect(() => {
     // Force a resize after mount to fix tile rendering
@@ -23,11 +25,27 @@ function MapController({ selectedVan }) {
   useEffect(() => {
     if (selectedVan && selectedVan.latitude && selectedVan.longitude && 
         !(selectedVan.latitude === 0 && selectedVan.longitude === 0)) {
+      // Zoom into specific van
       map.flyTo([selectedVan.latitude, selectedVan.longitude], 16, {
         duration: 1.5,
       });
+      setBounds(null); // Clear the bounds visualization
+    } else if (!selectedVan && vanList && vanList.length > 0) {
+      // Auto-Bounds Mode ("Triangulation Radius")
+      const coords = vanList.map(v => [v.latitude, v.longitude]);
+      const newBounds = L.latLngBounds(coords);
+      
+      // If only 1 van exists, bounds will be a single point, which breaks fitBounds.
+      // We manually pad it out so the map doesn't zoom in infinitely.
+      if (coords.length === 1) {
+        map.flyTo(coords[0], DEFAULT_ZOOM, { duration: 1.5 });
+      } else {
+        map.fitBounds(newBounds, { padding: [60, 60], animate: true, duration: 1.5 });
+      }
+      
+      setBounds(newBounds);
     }
-  }, [selectedVan, map]);
+  }, [selectedVan, vanList, map]);
 
   useEffect(() => {
     const handleFlyTo = (e) => {
@@ -39,6 +57,16 @@ function MapController({ selectedVan }) {
     window.addEventListener('map:flyTo', handleFlyTo);
     return () => window.removeEventListener('map:flyTo', handleFlyTo);
   }, [map]);
+
+  if (bounds && vanList.length > 1 && !selectedVan) {
+    // Render the visual triangulation radius area
+    return (
+      <Rectangle 
+        bounds={bounds} 
+        pathOptions={{ color: '#4ade80', weight: 2, fillOpacity: 0.05, dashArray: '5, 5' }} 
+      />
+    );
+  }
 
   return null;
 }
@@ -58,7 +86,7 @@ export default function MapView({ vans, selectedVan, onSelectVan }) {
         zoomControl={true}
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
       >
-        <MapController selectedVan={selectedVan} />
+        <MapController selectedVan={selectedVan} vanList={vanList} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

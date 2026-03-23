@@ -45,8 +45,8 @@ function MetricCell({ value, unit, label, accent = false }) {
 }
 
 function NetworkBars({ value }) {
-  // Determine how many bars should be lit based on value (0-100)
-  const activeBars = value >= 75 ? 4 : value >= 50 ? 3 : value >= 25 ? 2 : 1;
+  // Determine how many bars should be lit based on value (0-5 scale from IoT)
+  const activeBars = value >= 5 ? 4 : value >= 4 ? 3 : value >= 2 ? 2 : value >= 1 ? 1 : 0;
 
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">

@@ -29,7 +29,7 @@ export function useSensorDataRealtime(token) {
         longitude: data.long !== undefined ? data.long : data.longitude,
         temp_2: data.temp2 !== undefined ? data.temp2 : data.temp_2,
         battery_percentage: data.batPer !== undefined ? data.batPer : data.battery_percentage,
-        network_status: data.netSignal >= 75 ? 'strong' : data.netSignal >= 50 ? 'good' : 'fair',
+        network_status: data.netSignal >= 5 ? 'strong' : data.netSignal >= 4 ? 'good' : data.netSignal >= 2 ? 'fair' : 'weak',
         cooling_unit_battery: data.vanBat !== undefined ? data.vanBat : data.cooling_unit_battery,
         logger_battery: data.batPer !== undefined ? data.batPer : data.logger_battery,
         solar_panel_current: data.current !== undefined ? data.current : data.solar_panel_current,

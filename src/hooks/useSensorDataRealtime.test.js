@@ -15,7 +15,7 @@ const server = setupServer(
         long: 7.8910,
         temp2: 24.5,
         batPer: 85,
-        netSignal: 60, // should map to 'good' network status
+        netSignal: 4, // 0-5 scale that should map to 'good' network status
         vanBat: 90,
         current: 5.2,
         energy: 100.5,
@@ -62,7 +62,7 @@ describe('useSensorDataRealtime', () => {
     expect(van.logger_battery).toBe(85);
     expect(van.battery_percentage).toBe(85);
     
-    // netSignal mapping (60 >= 50 but < 75)
+    // netSignal mapping (4)
     expect(van.network_status).toBe('good'); 
     
     // vanBat mapping
