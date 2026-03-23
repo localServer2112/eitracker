@@ -155,12 +155,13 @@ export default function VanMarker({ van, isSelected, onClick }) {
         permanent
         className="van-plate-tooltip"
       >
-        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <span className="flex items-center gap-2 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 shadow-lg px-2.5 py-1 rounded-md text-xs font-bold text-zinc-900 dark:text-zinc-100 whitespace-nowrap ring-1 ring-black/5">
           <span
             style={{
-              width: 6, height: 6, borderRadius: '50%',
+              width: 8, height: 8, borderRadius: '50%',
               backgroundColor: van.status === 'online' ? '#22c55e' : van.status === 'attention' ? '#f59e0b' : '#ef4444',
               display: 'inline-block',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
             }}
           />
           {van.vehicle_plate_number}
