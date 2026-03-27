@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, useMap, Rectangle } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import VanMarker from './VanMarker';
 import VanInfoSidebar from './VanInfoSidebar';
@@ -59,10 +59,21 @@ function MapController({ selectedVan, vanList }) {
   }, [map]);
 
   if (bounds && vanList.length > 1 && !selectedVan) {
+    const center = bounds.getCenter();
+    let maxRadius = 0;
+    
+    vanList.forEach(van => {
+      const dist = center.distanceTo(L.latLng([van.latitude, van.longitude]));
+      if (dist > maxRadius) maxRadius = dist;
+    });
+
+    const radius = maxRadius * 1.1; // 10% padding so vans don't sit exactly on the line
+
     // Render the visual triangulation radius area
     return (
-      <Rectangle 
-        bounds={bounds} 
+      <Circle 
+        center={center}
+        radius={radius === 0 ? 50 : radius}
         pathOptions={{ color: '#4ade80', weight: 2, fillOpacity: 0.05, dashArray: '5, 5' }} 
       />
     );
