@@ -22,17 +22,6 @@ const server = setupServer(
         speed: 45
       }
     ]);
-  }),
-  // Intercept the SSE stream so it cleanly opens without throwing network errors
-  http.get('*/realtime/sse/', () => {
-    const stream = new ReadableStream({
-      start() {
-        // normally we would enqueue chunks, but keeping it open is enough for this test
-      }
-    });
-    return new HttpResponse(stream, {
-      headers: { 'Content-Type': 'text/event-stream' }
-    });
   })
 );
 

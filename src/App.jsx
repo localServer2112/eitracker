@@ -24,7 +24,7 @@ export default function App() {
     setToken(null);
   };
 
-  const { vans, connected } = useSensorDataRealtime(token);
+  const { vans } = useSensorDataRealtime(token);
 
   // Keep selectedVan synced with latest data
   const currentSelectedVan = selectedVan
@@ -58,25 +58,6 @@ export default function App() {
         {activeTab === 'notification' && <NotificationTab />}
       </main>
 
-      {/* SSE indicator */}
-      {token && (
-        <div
-          className={cn(
-            'fixed bottom-4 left-4 z-[9999] flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium shadow-lg backdrop-blur-sm border',
-            connected
-              ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200'
-              : 'bg-red-500/10 text-red-500 border-red-200'
-          )}
-        >
-          <span
-            className={cn(
-              'w-2 h-2 rounded-full',
-              connected ? 'bg-emerald-500 animate-pulse-dot' : 'bg-red-500'
-            )}
-          />
-          {connected ? 'Live' : 'Connecting...'}
-        </div>
-      )}
     </div>
   );
 }

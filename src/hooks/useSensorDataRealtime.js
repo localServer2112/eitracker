@@ -45,7 +45,6 @@ export function useSensorDataRealtime(token) {
   useEffect(() => {
     if (!token) return;
 
-    let reader;
     let isActive = true;
     let fallbackInterval;
 
@@ -62,87 +61,36 @@ export function useSensorDataRealtime(token) {
             initialData.forEach(van => {
               if (isActive) updateVan(van);
             });
+            if (isActive) {
+              setConnected(true);
+              setError(null);
+            }
+          }
+        } else {
+          if (isActive) {
+            setConnected(false);
+            setError('Failed to fetch data');
           }
         }
       } catch (err) {
         console.error('Failed to fetch vehicles data:', err);
-      }
-    };
-
-    const connectStream = async () => {
-      try {
-        // 1. Initial State Fetch
-        await fetchAllVehicles();
-        
-        // 1b. Periodic Fallback Poll (every 2 mins)
-        fallbackInterval = setInterval(() => {
-          if (isActive) fetchAllVehicles();
-        }, 120000);
-
-        // 2. Connect to Realtime SSE stream
-        const url = `${API_BASE}/realtime/sse/?token=${encodeURIComponent(token)}`;
-        const response = await fetch(url, {
-          headers: {
-            'Accept': 'text/event-stream',
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('SSE connection failed');
-        }
-
-        setConnected(true);
-        setError(null);
-
-        reader = response.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let buffer = '';
-
-        while (isActive) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const parts = buffer.split('\n\n');
-          buffer = parts.pop(); // Keep incomplete piece in buffer
-
-          for (const part of parts) {
-            const lines = part.split('\n');
-            let eventData = null;
-
-            for (const line of lines) {
-              if (line.startsWith('data:')) {
-                const jsonStr = line.slice(5).trim();
-                try {
-                  eventData = JSON.parse(jsonStr);
-                } catch (e) {
-                  // ignore parse error for heartbeat/incomplete JSON
-                }
-              }
-            }
-
-            if (eventData && eventData.type !== 'connected') {
-              updateVan(eventData);
-              window.dispatchEvent(
-                new CustomEvent('djr:sensor_data', { detail: eventData })
-              );
-            }
-          }
-        }
-      } catch (err) {
         if (isActive) {
           setConnected(false);
-          setError('Connection lost. Reconnecting...');
-          setTimeout(connectStream, 5000); // basic reconnect logic
+          setError('Connection error');
         }
       }
     };
 
-    connectStream();
+    // 1. Initial fetch
+    fetchAllVehicles();
+    
+    // 2. Periodic Poll (every 2 mins)
+    fallbackInterval = setInterval(() => {
+      if (isActive) fetchAllVehicles();
+    }, 120000);
 
     return () => {
       isActive = false;
-      if (reader) reader.cancel();
       if (fallbackInterval) clearInterval(fallbackInterval);
       setConnected(false);
     };

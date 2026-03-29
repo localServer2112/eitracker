@@ -30,11 +30,11 @@ function timeSince(dateStr) {
   return `${hours}hrs ago`;
 }
 
-function MetricCell({ value, unit, label, accent = false }) {
+function MetricCell({ value, unit, label, accent = false, danger = false }) {
   return (
     <div className="flex flex-col items-center justify-center py-3 px-1">
       <div className="flex items-baseline gap-0.5">
-        <span className={cn('text-[17px] font-bold', accent ? 'text-emerald-600' : 'text-foreground')}>
+        <span className={cn('text-[17px] font-bold', danger ? 'text-red-500' : accent ? 'text-emerald-600' : 'text-foreground')}>
           {value ?? '-'}
         </span>
         {unit && <span className="text-[11px] text-muted-foreground">{unit}</span>}
@@ -187,13 +187,13 @@ export default function VanInfoSidebar({ van, onClose, onViewOnMap }) {
                 value={van.cooling_unit_battery}
                 unit="%"
                 label="Cooling Unit Battery"
-                accent={(van.cooling_unit_battery ?? 0) < 20}
+                danger={(van.cooling_unit_battery ?? 0) < 30}
               />
               <MetricCell
                 value={van.logger_battery}
                 unit="%"
                 label="Logger Battery"
-                accent
+                danger={(van.logger_battery ?? 0) < 30}
               />
             </div>
           </div>
