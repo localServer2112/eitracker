@@ -50,6 +50,7 @@ export default function App() {
         {activeTab === 'vans' && (
           <VansListModal
             vans={vans}
+            token={token}
             onSelectVan={setSelectedVan}
             onSwitchToMap={() => setActiveTab('maps')}
           />

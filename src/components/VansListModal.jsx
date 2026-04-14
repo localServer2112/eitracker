@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Search, Truck } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, Truck, Download, X, Loader2 } from 'lucide-react';
 
 function timeSince(dateStr) {
   if (!dateStr) return '';
@@ -61,9 +62,50 @@ function StatusIndicator({ status, lastSeen }) {
 import vanActiveImg from '../assets/van-active.png';
 import vanDefaultImg from '../assets/van-default.png';
 
-export default function VansListModal({ vans, onSelectVan, onSwitchToMap }) {
+export default function VansListModal({ vans, token, onSelectVan, onSwitchToMap }) {
   const [search, setSearch] = useState('');
+  const [showExport, setShowExport] = useState(false);
+  const [exportPlate, setExportPlate] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [exportError, setExportError] = useState('');
+
   const vanList = Object.values(vans);
+
+  const handleExport = async () => {
+    setExportError('');
+    setIsDownloading(true);
+    try {
+      const params = new URLSearchParams();
+      if (exportPlate) params.set('plate_number', exportPlate);
+      if (startDate) params.set('start_date', startDate);
+      if (endDate) params.set('end_date', endDate);
+
+      const base = import.meta.env.VITE_API_BASE || '/api/v1';
+      const url = `${base}/sensor-data/export/csv${params.toString() ? `?${params}` : ''}`;
+
+      const res = await fetch(url, {
+        headers: { Authorization: `Token ${token}` },
+      });
+
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+      const blob = await res.blob();
+      const filename = exportPlate
+        ? `sensor-data-${exportPlate}.csv`
+        : 'sensor-data-all.csv';
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (err) {
+      setExportError(err.message || 'Export failed');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     if (!search.trim()) return vanList;
@@ -88,12 +130,92 @@ export default function VansListModal({ vans, onSelectVan, onSwitchToMap }) {
     <div className="absolute inset-0 z-[1000] flex items-start justify-center pt-6 pb-6 pointer-events-none">
       <Card className="w-full max-w-[680px] max-h-full flex flex-col pointer-events-auto animate-fade-in-up shadow-2xl border-0 rounded-2xl overflow-hidden">
         {/* Title */}
-        <CardHeader className="text-center pb-2 pt-6">
-          <CardTitle className="text-xl">All Vehicles</CardTitle>
-          <CardDescription className="mt-1">
-            {vanCount} Vans · {tricycleCount} Tricycles
-          </CardDescription>
+        <CardHeader className="pb-2 pt-6 px-5">
+          <div className="flex items-center justify-between">
+            <div className="flex-1" />
+            <div className="flex flex-col items-center">
+              <CardTitle className="text-xl">All Vehicles</CardTitle>
+              <CardDescription className="mt-1">
+                {vanCount} Vans · {tricycleCount} Tricycles
+              </CardDescription>
+            </div>
+            <div className="flex-1 flex justify-end">
+              <Button
+                variant={showExport ? 'secondary' : 'outline'}
+                size="sm"
+                className="gap-1.5 text-xs h-8"
+                onClick={() => { setShowExport((v) => !v); setExportError(''); }}
+              >
+                {showExport ? <X className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}
+                {showExport ? 'Close' : 'Export CSV'}
+              </Button>
+            </div>
+          </div>
         </CardHeader>
+
+        {/* Export panel */}
+        {showExport && (
+          <div className="px-5 pb-3">
+            <div className="rounded-xl border border-border/50 bg-muted/40 p-4 flex flex-col gap-3">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Export Options</p>
+
+              {/* Van selector */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-muted-foreground">Vehicle</label>
+                <select
+                  value={exportPlate}
+                  onChange={(e) => setExportPlate(e.target.value)}
+                  className="w-full rounded-lg border border-border/50 bg-background px-3 h-9 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
+                >
+                  <option value="">All Vans</option>
+                  {vanList.map((v) => (
+                    <option key={v.vehicle_plate_number} value={v.vehicle_plate_number}>
+                      {v.vehicle_plate_number}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Date range */}
+              <div className="flex gap-2">
+                <div className="flex flex-col gap-1 flex-1">
+                  <label className="text-xs text-muted-foreground">Start Date</label>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="h-9 text-sm bg-background border-border/50 rounded-lg"
+                  />
+                </div>
+                <div className="flex flex-col gap-1 flex-1">
+                  <label className="text-xs text-muted-foreground">End Date</label>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="h-9 text-sm bg-background border-border/50 rounded-lg"
+                  />
+                </div>
+              </div>
+
+              {exportError && (
+                <p className="text-xs text-red-400">{exportError}</p>
+              )}
+
+              <Button
+                onClick={handleExport}
+                disabled={isDownloading}
+                className="w-full h-9 text-sm bg-emerald-500 hover:bg-emerald-600 text-white"
+              >
+                {isDownloading ? (
+                  <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> Downloading...</>
+                ) : (
+                  <><Download className="w-3.5 h-3.5 mr-2" /> Download CSV</>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Search */}
         <div className="px-5 pb-3">
