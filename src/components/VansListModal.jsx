@@ -127,8 +127,8 @@ export default function VansListModal({ vans, token, onSelectVan, onSwitchToMap 
   };
 
   return (
-    <div className="absolute inset-0 z-[1000] flex items-start justify-center pt-6 pb-6 pointer-events-none">
-      <Card className="w-full max-w-[680px] max-h-full flex flex-col pointer-events-auto animate-fade-in-up shadow-2xl border-0 rounded-2xl overflow-hidden">
+    <div className="absolute inset-0 z-[1000] flex flex-col items-center pt-6 pb-6 pointer-events-none">
+      <Card className="w-full max-w-[680px] max-h-[80vh] flex-1 min-h-0 flex flex-col pointer-events-auto animate-fade-in-up shadow-2xl border-0 rounded-2xl overflow-hidden">
         {/* Title */}
         <CardHeader className="pb-2 pt-6 px-5">
           <div className="flex items-center justify-between">
