@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 
 const FREEZER_API_BASE = import.meta.env.VITE_FREEZER_API_BASE || '/freezer-api/v1';
+const FREEZER_TOKEN_ENV = import.meta.env.VITE_FREEZER_TOKEN;
 
-export function useFreezerData(token) {
+export function useFreezerData(loginToken) {
+  const token = FREEZER_TOKEN_ENV || loginToken;
   const [freezers, setFreezers] = useState({});
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState(null);

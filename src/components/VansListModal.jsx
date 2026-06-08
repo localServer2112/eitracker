@@ -118,8 +118,8 @@ export default function VansListModal({ vans, token, onSelectVan, onSwitchToMap 
     );
   }, [vanList, search]);
 
-  const vanCount = vanList.filter((v) => v.type === 'Van').length;
-  const tricycleCount = vanList.filter((v) => v.type === 'Tricycle').length;
+  const vanCount = vanList.filter((v) => v.type?.toLowerCase() === 'van').length;
+  const tricycleCount = vanList.filter((v) => v.type?.toLowerCase() === 'tricycle').length;
 
   const handleRowClick = (van) => {
     onSelectVan(van);
@@ -136,7 +136,9 @@ export default function VansListModal({ vans, token, onSelectVan, onSwitchToMap 
             <div className="flex flex-col items-center">
               <CardTitle className="text-xl">All Vehicles</CardTitle>
               <CardDescription className="mt-1">
-                {vanCount} Vans · {tricycleCount} Tricycles
+                {vanCount + tricycleCount > 0
+                  ? `${vanCount} Vans · ${tricycleCount} Tricycles`
+                  : `${vanList.length} ${vanList.length === 1 ? 'Vehicle' : 'Vehicles'}`}
               </CardDescription>
             </div>
             <div className="flex-1 flex justify-end">

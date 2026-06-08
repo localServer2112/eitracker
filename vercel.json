@@ -5,6 +5,10 @@
       "destination": "http://165.227.226.100/api/$1"
     },
     {
+      "source": "/freezer-api/(.*)",
+      "destination": "http://157.245.35.148/api/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
