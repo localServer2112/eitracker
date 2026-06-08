@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Marker, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
+import freezerImg from '../assets/freezer.svg';
 
 export default function FreezerMarker({ freezer, isSelected, onClick }) {
   const map = useMap();
@@ -11,30 +12,27 @@ export default function FreezerMarker({ freezer, isSelected, onClick }) {
   });
 
   const icon = useMemo(() => {
-    const isOnline = freezer.status === 'online' || freezer.status === 'attention';
     const scaleFactor = Math.pow(1.2, zoom - 14);
-    const size = Math.max(20, Math.floor(36 * scaleFactor));
+    const size = Math.max(20, Math.floor(40 * scaleFactor));
     const anchor = Math.floor(size / 2);
-    const color = isOnline ? '#06b6d4' : '#6b7280';
-    const bgColor = isOnline ? 'rgba(6,182,212,0.15)' : 'rgba(107,114,128,0.15)';
-    const borderColor = isSelected ? '#ffffff' : color;
     const safeId = String(freezer.device_id).replace(/\W/g, '');
 
     return L.divIcon({
       className: 'bg-transparent border-0',
       html: `
-        <div id="freezer-marker-${safeId}" style="width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;">
-          <svg width="${size}" height="${size}" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="2" width="32" height="32" rx="8" fill="${bgColor}" stroke="${borderColor}" stroke-width="${isSelected ? 2.5 : 1.5}"/>
-            <text x="18" y="24" text-anchor="middle" font-size="17" fill="${color}">❄</text>
-          </svg>
+        <div style="width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;">
+          <img
+            id="freezer-img-${safeId}"
+            src="${freezerImg}"
+            style="width:100%;height:100%;object-fit:contain;"
+          />
         </div>
       `,
       iconSize: [size, size],
       iconAnchor: [anchor, anchor],
       popupAnchor: [0, -anchor],
     });
-  }, [freezer.status, freezer.device_id, zoom, isSelected]);
+  }, [freezer.device_id, zoom]);
 
   if (!freezer.latitude || !freezer.longitude) return null;
 
@@ -56,7 +54,7 @@ export default function FreezerMarker({ freezer, isSelected, onClick }) {
               width: 8,
               height: 8,
               borderRadius: '50%',
-              backgroundColor: freezer.status === 'online' ? '#06b6d4' : '#ef4444',
+              backgroundColor: freezer.status === 'online' || freezer.status === 'attention' ? '#22c55e' : '#ef4444',
               display: 'inline-block',
             }}
           />
