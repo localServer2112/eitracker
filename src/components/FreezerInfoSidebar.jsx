@@ -9,9 +9,9 @@ import {
   X,
   BatteryMedium,
   MapPin,
-  Thermometer,
   Zap,
   Sun,
+  Hash,
 } from 'lucide-react';
 
 function timeSince(dateStr) {
@@ -114,15 +114,10 @@ export default function FreezerInfoSidebar({ freezer, onClose, onViewOnMap }) {
           <div className="px-5 pt-5 pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">❄️</span>
-                  <h2 className="text-xl font-bold text-foreground tracking-tight">
-                    {freezer.device_id}
-                  </h2>
-                </div>
-                <p className="text-[13px] text-muted-foreground mt-0.5">
-                  {freezer.batch_code ? `Batch: ${freezer.batch_code}` : freezer.serial_number || 'Freezer Unit'}
-                </p>
+                <h2 className="text-xl font-bold text-foreground tracking-tight">
+                  {freezer.device_id}
+                </h2>
+                <p className="text-[13px] text-muted-foreground mt-0.5">Freezer Unit</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">
@@ -245,31 +240,12 @@ export default function FreezerInfoSidebar({ freezer, onClose, onViewOnMap }) {
             />
             <Separator />
             <StatRow
-              icon={Thermometer}
-              value={freezer.temperature}
-              unit="°C"
-              label="Freezer temperature"
-              date={dateLabel}
+              icon={Hash}
+              value={freezer.serial_number}
+              unit=""
+              label="Serial number"
             />
           </div>
-
-          {/* Device info */}
-          {(freezer.serial_number || freezer.chip_mac) && (
-            <div className="mx-5 mt-3 mb-2 px-4 py-3 bg-muted/30 rounded-xl">
-              {freezer.serial_number && (
-                <div className="flex justify-between text-[11px] py-0.5">
-                  <span className="text-muted-foreground">Serial</span>
-                  <span className="font-mono text-foreground">{freezer.serial_number}</span>
-                </div>
-              )}
-              {freezer.chip_mac && (
-                <div className="flex justify-between text-[11px] py-0.5">
-                  <span className="text-muted-foreground">MAC</span>
-                  <span className="font-mono text-foreground">{freezer.chip_mac}</span>
-                </div>
-              )}
-            </div>
-          )}
 
           <div className="h-4" />
         </ScrollArea>
