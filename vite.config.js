@@ -17,10 +17,14 @@ export default defineConfig({
         changeOrigin: true,
         configure: (proxy, _options) => {
           proxy.on('proxyReq', (proxyReq, req, _res) => {
-            // Force Identity encoding so the backend does not chunk the response
             proxyReq.setHeader('accept-encoding', 'identity');
           });
         }
+      },
+      '/freezer-api': {
+        target: 'http://157.245.35.148',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/freezer-api/, '/api'),
       }
     }
   },

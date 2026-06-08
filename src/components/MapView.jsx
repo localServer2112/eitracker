@@ -3,6 +3,11 @@ import { MapContainer, TileLayer, useMap, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import VanMarker from './VanMarker';
 import VanInfoSidebar from './VanInfoSidebar';
+import FreezerMarker from './FreezerMarker';
+import FreezerInfoSidebar from './FreezerInfoSidebar';
+import TrafficToggle from './TrafficToggle';
+
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 const IBADAN_CENTER = [7.3964, 3.9167];
 const DEFAULT_ZOOM = 14;
@@ -82,10 +87,14 @@ function MapController({ selectedVan, vanList }) {
   return null;
 }
 
-export default function MapView({ vans, selectedVan, onSelectVan }) {
-  // Filter out vans with 0.0 coordinates (default GPS values before lock)
+export default function MapView({ vans, selectedVan, onSelectVan, freezers, selectedFreezer, onSelectFreezer }) {
+  const [trafficOn, setTrafficOn] = useState(false);
+
   const vanList = Object.values(vans).filter(
     (van) => van.latitude !== 0 && van.longitude !== 0 && van.latitude && van.longitude
+  );
+  const freezerList = Object.values(freezers || {}).filter(
+    (f) => f.latitude !== 0 && f.longitude !== 0 && f.latitude && f.longitude
   );
 
   return (
@@ -98,10 +107,19 @@ export default function MapView({ vans, selectedVan, onSelectVan }) {
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
       >
         <MapController selectedVan={selectedVan} vanList={vanList} />
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        {trafficOn && MAPBOX_TOKEN ? (
+          <TileLayer
+            url={`https://api.mapbox.com/styles/v1/mapbox/traffic-day-v2/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`}
+            attribution='© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            tileSize={512}
+            zoomOffset={-1}
+          />
+        ) : (
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+        )}
 
         {vanList.map((van) => (
           <VanMarker
@@ -111,13 +129,40 @@ export default function MapView({ vans, selectedVan, onSelectVan }) {
             onClick={onSelectVan}
           />
         ))}
+
+        {freezerList.map((freezer) => (
+          <FreezerMarker
+            key={freezer.device_id}
+            freezer={freezer}
+            isSelected={selectedFreezer?.device_id === freezer.device_id}
+            onClick={onSelectFreezer}
+          />
+        ))}
       </MapContainer>
 
-      {selectedVan && (
-        <VanInfoSidebar 
-          van={selectedVan} 
-          onClose={() => onSelectVan(null)} 
+      {MAPBOX_TOKEN && (
+        <TrafficToggle active={trafficOn} onToggle={() => setTrafficOn((v) => !v)} />
+      )}
+
+      {selectedVan && !selectedFreezer && (
+        <VanInfoSidebar
+          van={selectedVan}
+          onClose={() => onSelectVan(null)}
           onViewOnMap={() => window.dispatchEvent(new CustomEvent('map:flyTo', { detail: selectedVan }))}
+        />
+      )}
+
+      {selectedFreezer && (
+        <FreezerInfoSidebar
+          freezer={selectedFreezer}
+          onClose={() => onSelectFreezer(null)}
+          onViewOnMap={() =>
+            window.dispatchEvent(
+              new CustomEvent('map:flyTo', {
+                detail: { latitude: selectedFreezer.latitude, longitude: selectedFreezer.longitude },
+              })
+            )
+          }
         />
       )}
     </div>

@@ -1,34 +1,47 @@
-import { useState, useMemo } from 'react';
-import { cn } from '@/lib/utils';
+import { useState } from 'react';
 import Header from './components/Header';
 import MapView from './components/MapView';
 import VansListModal from './components/VansListModal';
-import NotificationTab from './components/NotificationTab';
+import FreezerListModal from './components/FreezerListModal';
 import { useSensorDataRealtime } from './hooks/useSensorDataRealtime';
+import { useFreezerData } from './hooks/useFreezerData';
 import Login from './components/Login';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('maps');
   const [selectedVan, setSelectedVan] = useState(null);
-  
+  const [selectedFreezer, setSelectedFreezer] = useState(null);
+
   // Manage auth state
   const [token, setToken] = useState(() => localStorage.getItem('auth_token') || null);
+  const [freezerToken, setFreezerToken] = useState(() => localStorage.getItem('freezer_auth_token') || null);
 
-  const handleLogin = (newToken) => {
+  const handleLogin = (newToken, newFreezerToken) => {
     localStorage.setItem('auth_token', newToken);
     setToken(newToken);
+    if (newFreezerToken) {
+      localStorage.setItem('freezer_auth_token', newFreezerToken);
+      setFreezerToken(newFreezerToken);
+    }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('freezer_auth_token');
     setToken(null);
+    setFreezerToken(null);
   };
 
   const { vans } = useSensorDataRealtime(token);
+  const { freezers } = useFreezerData(freezerToken);
 
-  // Keep selectedVan synced with latest data
+  // Keep selections synced with latest data
   const currentSelectedVan = selectedVan
     ? vans[selectedVan.vehicle_plate_number] || selectedVan
+    : null;
+
+  const currentSelectedFreezer = selectedFreezer
+    ? freezers[selectedFreezer.device_id] || selectedFreezer
     : null;
 
   if (!token) {
@@ -44,19 +57,31 @@ export default function App() {
         <MapView
           vans={vans}
           selectedVan={activeTab === 'maps' ? currentSelectedVan : null}
-          onSelectVan={activeTab === 'maps' ? setSelectedVan : () => {}}
+          onSelectVan={(van) => { setSelectedVan(van); setSelectedFreezer(null); }}
+          freezers={freezers}
+          selectedFreezer={activeTab === 'maps' ? currentSelectedFreezer : null}
+          onSelectFreezer={(f) => { setSelectedFreezer(f); setSelectedVan(null); }}
         />
 
         {activeTab === 'vans' && (
           <VansListModal
             vans={vans}
             token={token}
-            onSelectVan={setSelectedVan}
+            onSelectVan={(van) => { setSelectedVan(van); setSelectedFreezer(null); }}
             onSwitchToMap={() => setActiveTab('maps')}
           />
         )}
 
-        {activeTab === 'notification' && <NotificationTab />}
+        {activeTab === 'fridges' && (
+          <FreezerListModal
+            freezers={freezers}
+            token={freezerToken}
+            onSelectFreezer={(f) => { setSelectedFreezer(f); setSelectedVan(null); }}
+            onSwitchToMap={() => setActiveTab('maps')}
+          />
+        )}
+
+
       </main>
 
     </div>

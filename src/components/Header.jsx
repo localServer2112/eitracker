@@ -1,10 +1,10 @@
 import { cn } from '@/lib/utils';
-import { Fish, ChevronDown, Bell, LogOut } from 'lucide-react';
+import { Fish, ChevronDown, LogOut } from 'lucide-react';
 
 const TABS = [
   { id: 'maps', label: 'Maps' },
   { id: 'vans', label: 'Vans' },
-  { id: 'notification', label: 'Notification' },
+  { id: 'fridges', label: 'Freezers' },
 ];
 
 export default function Header({ activeTab, onTabChange, onLogout }) {
@@ -38,11 +38,7 @@ export default function Header({ activeTab, onTabChange, onLogout }) {
 
       {/* Right actions */}
       <div className="flex items-center gap-4">
-        <button className="relative text-gray-400 hover:text-gray-200 transition-colors cursor-pointer">
-          <Bell className="w-[18px] h-[18px]" />
-          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-[#111]" />
-        </button>
-        <button 
+        <button
           onClick={onLogout}
           className="text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
           title="Logout"
