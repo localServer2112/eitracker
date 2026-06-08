@@ -11,6 +11,9 @@ export default defineConfig({
     },
   },
   server: {
+    headers: {
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://api.mapbox.com https://*.mapbox.com; connect-src 'self' https://api.mapbox.com https://*.mapbox.com https://nominatim.openstreetmap.org http://165.227.226.100 http://157.245.35.148; worker-src blob:; font-src 'self' data:;"
+    },
     proxy: {
       '/api': {
         target: 'http://165.227.226.100',
