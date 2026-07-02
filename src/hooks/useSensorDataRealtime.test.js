@@ -66,4 +66,32 @@ describe('useSensorDataRealtime', () => {
     expect(van.status).toBe('online');
     expect(typeof van.last_seen).toBe('string');
   });
+
+  it('marks a vehicle offline when its last report is stale', async () => {
+    const staleTimestamp = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+
+    server.use(
+      http.get('*/sensor-data/all-vehicles/', () => {
+        return HttpResponse.json([
+          {
+            vehicle_plate_number: 'STALE-456',
+            lat: 1.234,
+            long: 5.678,
+            created_at: staleTimestamp,
+          },
+        ]);
+      })
+    );
+
+    const { result } = renderHook(() => useSensorDataRealtime('fake-token'));
+
+    await waitFor(() => {
+      expect(Object.keys(result.current.vans).length).toBe(1);
+    });
+
+    const van = result.current.vans['STALE-456'];
+    expect(van).toBeDefined();
+    expect(van.status).toBe('offline');
+    expect(van.last_seen).toBe(staleTimestamp);
+  });
 });
