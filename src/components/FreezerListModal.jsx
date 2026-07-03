@@ -174,7 +174,11 @@ export default function FreezerListModal({ freezers, token, onSelectFreezer, onS
           <CardContent className="pt-0 pb-4">
             {filtered.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground text-sm">
-                {freezerList.length === 0 ? 'No freezers found' : 'No results'}
+                {!token
+                  ? 'Freezer login failed — check your credentials and try logging in again'
+                  : freezerList.length === 0
+                    ? 'No freezers found'
+                    : 'No results'}
               </div>
             ) : (
               <div className="space-y-0.5">

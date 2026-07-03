@@ -33,11 +33,11 @@ describe('Login', () => {
     await fillAndSubmit();
 
     await waitFor(() => {
-      expect(onLogin).toHaveBeenCalledWith('vehicle-token', 'freezer-token');
+      expect(onLogin).toHaveBeenCalledWith('vehicle-token', 'freezer-token', null);
     });
   });
 
-  it('still logs in with a null freezer token when the freezer API has a network-level failure', async () => {
+  it('still logs in with a null freezer token and an error reason when the freezer API has a network-level failure', async () => {
     server.use(
       http.post('*/auth/login/', () => HttpResponse.json({ token: 'vehicle-token' })),
       http.post('*/auth/token/', () => HttpResponse.error())
@@ -49,7 +49,27 @@ describe('Login', () => {
     await fillAndSubmit();
 
     await waitFor(() => {
-      expect(onLogin).toHaveBeenCalledWith('vehicle-token', null);
+      expect(onLogin).toHaveBeenCalledWith('vehicle-token', null, 'Cannot reach the freezer server');
+    });
+  });
+
+  it('logs in with vehicle token and a credentials error reason when the freezer API rejects the login', async () => {
+    server.use(
+      http.post('*/auth/login/', () => HttpResponse.json({ token: 'vehicle-token' })),
+      http.post('*/auth/token/', () => new HttpResponse(null, { status: 400 }))
+    );
+
+    const onLogin = vi.fn();
+    render(<Login onLogin={onLogin} />);
+
+    await fillAndSubmit();
+
+    await waitFor(() => {
+      expect(onLogin).toHaveBeenCalledWith(
+        'vehicle-token',
+        null,
+        'Freezer login failed — check your credentials'
+      );
     });
   });
 

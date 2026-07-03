@@ -40,12 +40,18 @@ export default function Login({ onLogin }) {
       if (!vehicleToken) throw new Error('No token returned by the API');
 
       let freezerToken = null;
+      let freezerAuthError = null;
       if (freezerResult.status === 'fulfilled' && freezerResult.value.ok) {
         const freezerData = await freezerResult.value.json().catch(() => null);
         freezerToken = freezerData?.token || freezerData?.key || null;
+        if (!freezerToken) freezerAuthError = 'Freezer login returned no token';
+      } else if (freezerResult.status === 'rejected') {
+        freezerAuthError = 'Cannot reach the freezer server';
+      } else {
+        freezerAuthError = 'Freezer login failed — check your credentials';
       }
 
-      onLogin(vehicleToken, freezerToken);
+      onLogin(vehicleToken, freezerToken, freezerAuthError);
     } catch (err) {
       setError(err.message || 'Login failed');
     } finally {

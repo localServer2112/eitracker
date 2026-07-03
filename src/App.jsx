@@ -7,6 +7,15 @@ import { useSensorDataRealtime } from './hooks/useSensorDataRealtime';
 import { useFreezerData } from './hooks/useFreezerData';
 import Login from './components/Login';
 
+// TEMPORARY: the freezer API is a separate backend with its own user
+// database, so most accounts that log in fine on the vehicle API get
+// rejected by the freezer API. Until that account is provisioned, fall back
+// to a shared token so freezer data stays available. NOTE this token is
+// inlined into the client bundle by Vite and is readable via DevTools by
+// anyone visiting the deployed site — remove this fallback once per-user
+// freezer login actually works.
+const FREEZER_TOKEN_FALLBACK = import.meta.env.VITE_FREEZER_TOKEN || null;
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('maps');
   const [selectedVan, setSelectedVan] = useState(null);
@@ -14,14 +23,28 @@ export default function App() {
 
   // Manage auth state
   const [token, setToken] = useState(() => localStorage.getItem('auth_token') || null);
-  const [freezerToken, setFreezerToken] = useState(() => localStorage.getItem('freezer_auth_token') || null);
+  const [freezerToken, setFreezerToken] = useState(
+    () => localStorage.getItem('freezer_auth_token') || FREEZER_TOKEN_FALLBACK
+  );
+  const [freezerLoginError, setFreezerLoginError] = useState(null);
 
-  const handleLogin = (newToken, newFreezerToken) => {
+  const handleLogin = (newToken, newFreezerToken, freezerAuthError) => {
     localStorage.setItem('auth_token', newToken);
     setToken(newToken);
-    if (newFreezerToken) {
-      localStorage.setItem('freezer_auth_token', newFreezerToken);
-      setFreezerToken(newFreezerToken);
+
+    // Prefer the real per-user token; fall back to the shared token so
+    // freezer data is still available when the freezer login fails.
+    const resolvedFreezerToken = newFreezerToken || FREEZER_TOKEN_FALLBACK;
+    if (resolvedFreezerToken) {
+      localStorage.setItem('freezer_auth_token', resolvedFreezerToken);
+      setFreezerToken(resolvedFreezerToken);
+      setFreezerLoginError(null);
+    } else {
+      // Clear any stale token from a previous session so we don't keep using
+      // freezer credentials this login attempt couldn't re-establish.
+      localStorage.removeItem('freezer_auth_token');
+      setFreezerToken(null);
+      setFreezerLoginError(freezerAuthError || null);
     }
   };
 
@@ -30,6 +53,7 @@ export default function App() {
     localStorage.removeItem('freezer_auth_token');
     setToken(null);
     setFreezerToken(null);
+    setFreezerLoginError(null);
   };
 
   const { vans, connected: vansConnected, error: vansError } = useSensorDataRealtime(token);
@@ -37,7 +61,14 @@ export default function App() {
 
   const connection = {
     vans: { connected: vansConnected, error: vansError },
-    freezers: { connected: freezersConnected, error: freezersError, enabled: Boolean(freezerToken) },
+    freezers: {
+      connected: freezersConnected,
+      error: freezersError || freezerLoginError,
+      // The Freezers tab is always available, so its connection status
+      // should always be surfaced — not hidden just because the freezer
+      // login attempt failed and left us without a token.
+      enabled: true,
+    },
   };
 
   // Keep selections synced with latest data
