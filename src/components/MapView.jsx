@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, useMap, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import VanMarker from './VanMarker';
@@ -14,7 +14,19 @@ const DEFAULT_ZOOM = 14;
 
 function MapController({ selectedVan, vanList }) {
   const map = useMap();
-  const [bounds, setBounds] = useState(null);
+
+  const selectedPlate = selectedVan?.vehicle_plate_number ?? null;
+  const hasVans = vanList.length > 0;
+
+  // Keep refs updated each render so effects can read fresh data
+  // without depending on object/array identity (which changes every poll).
+  const selectedVanRef = useRef(selectedVan);
+  selectedVanRef.current = selectedVan;
+
+  const vanListRef = useRef(vanList);
+  vanListRef.current = vanList;
+
+  const didAutoFitRef = useRef(false);
 
   useEffect(() => {
     // Force a resize after mount to fix tile rendering
@@ -27,30 +39,38 @@ function MapController({ selectedVan, vanList }) {
     };
   }, [map]);
 
+  // Fly to the selected van once when the *selection* changes (keyed on the
+  // stable plate string), not on every data poll that refreshes coordinates.
   useEffect(() => {
-    if (selectedVan && selectedVan.latitude && selectedVan.longitude && 
-        !(selectedVan.latitude === 0 && selectedVan.longitude === 0)) {
-      // Zoom into specific van
-      map.flyTo([selectedVan.latitude, selectedVan.longitude], 16, {
-        duration: 1.5,
-      });
-      setBounds(null); // Clear the bounds visualization
-    } else if (!selectedVan && vanList && vanList.length > 0) {
-      // Auto-Bounds Mode ("Triangulation Radius")
-      const coords = vanList.map(v => [v.latitude, v.longitude]);
-      const newBounds = L.latLngBounds(coords);
-      
-      // If only 1 van exists, bounds will be a single point, which breaks fitBounds.
-      // We manually pad it out so the map doesn't zoom in infinitely.
-      if (coords.length === 1) {
-        map.flyTo(coords[0], DEFAULT_ZOOM, { duration: 1.5 });
-      } else {
-        map.fitBounds(newBounds, { padding: [60, 60], animate: true, duration: 1.5 });
-      }
-      
-      setBounds(newBounds);
+    if (!selectedPlate) return;
+    const v = selectedVanRef.current;
+    if (v && v.latitude && v.longitude && !(v.latitude === 0 && v.longitude === 0)) {
+      map.flyTo([v.latitude, v.longitude], 16, { duration: 1.5 });
     }
-  }, [selectedVan, vanList, map]);
+  }, [selectedPlate, map]);
+
+  // Auto-Bounds Mode ("Triangulation Radius"): fire once when data first
+  // loads and once each time the user deselects — never on a background poll.
+  useEffect(() => {
+    if (selectedPlate) {
+      didAutoFitRef.current = false;
+      return;
+    }
+    if (didAutoFitRef.current || vanListRef.current.length === 0) return;
+    didAutoFitRef.current = true;
+
+    const list = vanListRef.current;
+    const coords = list.map((v) => [v.latitude, v.longitude]);
+    const newBounds = L.latLngBounds(coords);
+
+    // If only 1 van exists, bounds will be a single point, which breaks fitBounds.
+    // We manually pad it out so the map doesn't zoom in infinitely.
+    if (coords.length === 1) {
+      map.flyTo(coords[0], DEFAULT_ZOOM, { duration: 1.5 });
+    } else {
+      map.fitBounds(newBounds, { padding: [60, 60], animate: true, duration: 1.5 });
+    }
+  }, [selectedPlate, map, hasVans]);
 
   useEffect(() => {
     const handleFlyTo = (e) => {
@@ -63,12 +83,17 @@ function MapController({ selectedVan, vanList }) {
     return () => window.removeEventListener('map:flyTo', handleFlyTo);
   }, [map]);
 
-  if (bounds && vanList.length > 1 && !selectedVan) {
-    const center = bounds.getCenter();
+  if (!selectedVan && vanList.length > 1) {
+    const coords = [];
+    vanList.forEach((van) => {
+      coords.push([van.latitude, van.longitude]);
+    });
+    const b = L.latLngBounds(coords);
+    const center = b.getCenter();
     let maxRadius = 0;
-    
-    vanList.forEach(van => {
-      const dist = center.distanceTo(L.latLng([van.latitude, van.longitude]));
+
+    coords.forEach((coord) => {
+      const dist = center.distanceTo(L.latLng(coord));
       if (dist > maxRadius) maxRadius = dist;
     });
 
