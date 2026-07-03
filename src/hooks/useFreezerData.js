@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { deriveStatus } from '../lib/deviceStatus';
 
 const FREEZER_API_BASE = import.meta.env.VITE_FREEZER_API_BASE || '/freezer-api/v1';
 
@@ -10,6 +11,8 @@ export function useFreezerData(loginToken) {
 
   const updateFreezer = useCallback((data) => {
     if (!data || !data.device_id) return;
+
+    const lastSeen = data.created_at || new Date().toISOString();
 
     setFreezers((prev) => ({
       ...prev,
@@ -26,8 +29,8 @@ export function useFreezerData(loginToken) {
               : data.network_signal >= 2
                 ? 'fair'
                 : 'weak',
-        last_seen: data.created_at || new Date().toISOString(),
-        status: 'online',
+        last_seen: lastSeen,
+        status: deriveStatus(lastSeen),
       },
     }));
   }, []);
@@ -62,6 +65,18 @@ export function useFreezerData(loginToken) {
           setConnected(false);
           setError('Connection error');
         }
+      }
+
+      // Re-derive status for all known freezers so stale devices decay to
+      // 'attention'/'offline' even if they stopped appearing in the response.
+      if (isActive) {
+        setFreezers((prev) => {
+          const next = {};
+          for (const [id, f] of Object.entries(prev)) {
+            next[id] = { ...f, status: deriveStatus(f.last_seen) };
+          }
+          return next;
+        });
       }
     };
 

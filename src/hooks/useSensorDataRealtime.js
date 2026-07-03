@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { deriveStatus } from '../lib/deviceStatus';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://your-domain.com/api/v1';
 
@@ -19,6 +20,8 @@ export function useSensorDataRealtime(token) {
   const updateVan = useCallback((data) => {
     if (!data || !data.vehicle_plate_number) return;
 
+    const lastSeen = data.created_at || new Date().toISOString();
+
     setVans((prev) => ({
       ...prev,
       [data.vehicle_plate_number]: {
@@ -36,8 +39,8 @@ export function useSensorDataRealtime(token) {
         energy_charged: data.energy !== undefined ? data.energy : data.energy_charged,
         vehicle_speed: data.speed !== undefined ? data.speed : data.vehicle_speed,
         
-        last_seen: data.created_at || new Date().toISOString(),
-        status: 'online',
+        last_seen: lastSeen,
+        status: deriveStatus(lastSeen),
       },
     }));
   }, []);
@@ -78,6 +81,18 @@ export function useSensorDataRealtime(token) {
           setConnected(false);
           setError('Connection error');
         }
+      }
+
+      // Re-derive status for all known vans so stale devices decay to
+      // 'attention'/'offline' even if they stopped appearing in the response.
+      if (isActive) {
+        setVans((prev) => {
+          const next = {};
+          for (const [id, v] of Object.entries(prev)) {
+            next[id] = { ...v, status: deriveStatus(v.last_seen) };
+          }
+          return next;
+        });
       }
     };
 
