@@ -4,12 +4,18 @@ import { deriveStatus } from '../lib/deviceStatus';
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://your-domain.com/api/v1';
 
 /**
- * Real-time sensor data hook using SSE (Server-Sent Events).
+ * Sensor data hook for the vehicle/van fleet.
  *
- * Connects to the djangorealtime SSE endpoint and listens for `sensor_data` events.
- * Maintains a vans object keyed by vehicle_plate_number for O(1) per-vehicle updates.
+ * Fetches all vehicles from `${API_BASE}/sensor-data/all-vehicles/` on mount and
+ * polls the same endpoint every 120 seconds.
+ * Maintains a vans object keyed by vehicle_plate_number for O(1) per-vehicle updates,
+ * mapping backend shorthand keys (lat/long/temp2/batPer/netSignal/vanBat/current/energy/speed)
+ * to frontend field names (latitude/longitude/temp_2/battery_percentage/network_status/
+ * cooling_unit_battery/solar_panel_current/energy_charged/vehicle_speed).
  *
- * @param {string|null} token - Auth token for SSE endpoint. Null skips connection.
+ * NOTE: name predates SSE removal (150dcd6); polling-based since then.
+ *
+ * @param {string|null} token - Auth token for the API. Null skips fetching.
  * @returns {{ vans: Object, connected: boolean, error: string|null }}
  */
 export function useSensorDataRealtime(token) {
