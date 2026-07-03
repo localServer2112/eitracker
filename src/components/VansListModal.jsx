@@ -2,62 +2,12 @@ import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Search, Truck, Download, X, Loader2 } from 'lucide-react';
-
-function timeSince(dateStr) {
-  if (!dateStr) return '';
-  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (seconds < 60) return `${seconds}s ago`;
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}min ago`;
-  const hours = Math.floor(minutes / 60);
-  return `${hours}hrs ago`;
-}
-
-function MiniMetric({ label, value, unit }) {
-  const isNull = value === null || value === undefined;
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] text-muted-foreground leading-none ">{label}</span>
-      <span className={cn('text-sm font-semibold leading-none py-2', isNull ? 'text-muted-foreground/40' : 'text-foreground')}>
-        {isNull ? '-' : value}
-        {!isNull && unit && <span className="text-muted-foreground font-normal">{unit}</span>}
-      </span>
-    </div>
-  );
-}
-
-function StatusIndicator({ status, lastSeen }) {
-  const configs = {
-    online: { variant: 'success', label: 'Online' },
-    offline: { variant: 'danger', label: 'Offline' },
-    attention: { variant: 'warning', label: 'Attention' },
-  };
-  const c = configs[status] || configs.offline;
-
-  return (
-    <div className="flex flex-col items-end gap-1 shrink-0">
-      <Badge variant={c.variant} className="text-[11px] px-2 py-0">
-        {c.label}
-      </Badge>
-      {status === 'offline' && lastSeen && (
-        <span className="text-[10px] text-red-400">
-          Last seen: {timeSince(lastSeen)}
-        </span>
-      )}
-      {status === 'attention' && (
-        <span className="text-[10px] text-amber-500 flex items-center gap-1">
-          <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse-dot" />
-          Attention
-        </span>
-      )}
-    </div>
-  );
-}
+import { timeSince } from '@/lib/time';
+import { MiniMetric, StatusIndicator } from '@/components/ui/metrics';
 
 import vanActiveImg from '../assets/van-active.png';
 import vanDefaultImg from '../assets/van-default.png';
@@ -273,7 +223,7 @@ export default function VansListModal({ vans, token, onSelectVan, onSwitchToMap 
                         )}
                         {van.status === 'offline' && van.last_seen && (
                           <span className="text-[10px] text-red-400">
-                            · Last seen: {timeSince(van.last_seen)}
+                            · Last seen: {timeSince(van.last_seen, { emptyText: '' })}
                           </span>
                         )}
                       </div>
