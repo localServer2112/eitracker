@@ -7,7 +7,49 @@ const TABS = [
   { id: 'fridges', label: 'Freezers' },
 ];
 
-export default function Header({ activeTab, onTabChange, onLogout }) {
+/* eslint-disable react/prop-types -- codebase does not use PropTypes; connection is a plain summary object, see src/hooks/useSensorDataRealtime.js */
+function ConnectionStatus({ connection }) {
+  const vans = connection?.vans;
+  const freezers = connection?.freezers;
+
+  const vansDown = Boolean(vans) && (vans.connected === false || Boolean(vans.error));
+  const freezersEnabled = Boolean(freezers?.enabled);
+  const freezersDown = freezersEnabled && (freezers.connected === false || Boolean(freezers.error));
+
+  const isDown = vansDown || freezersDown;
+
+  let label = 'Live';
+  let title;
+  if (vansDown && freezersDown) {
+    label = 'Connection lost';
+    title = vans.error || freezers.error;
+  } else if (vansDown) {
+    label = 'Vans feed lost';
+    title = vans.error;
+  } else if (freezersDown) {
+    label = 'Freezer feed lost';
+    title = freezers.error;
+  }
+
+  return (
+    <div
+      className="flex items-center gap-1.5 text-[11px] text-gray-400"
+      title={title}
+    >
+      <span
+        className={cn(
+          'w-1.5 h-1.5 rounded-full',
+          isDown ? 'bg-red-500 animate-pulse-dot' : 'bg-emerald-500'
+        )}
+      />
+      <span className={cn(isDown && 'text-red-400')}>{label}</span>
+    </div>
+  );
+}
+/* eslint-enable react/prop-types */
+
+// eslint-disable-next-line react/prop-types -- codebase does not use PropTypes; connection is a plain summary object, see src/hooks/useSensorDataRealtime.js
+export default function Header({ activeTab, onTabChange, onLogout, connection }) {
   return (
     <header className="relative z-50 flex items-center justify-between px-6 h-[64px] bg-[#111111] border-b border-white/5">
       {/* Brand */}
@@ -38,6 +80,7 @@ export default function Header({ activeTab, onTabChange, onLogout }) {
 
       {/* Right actions */}
       <div className="flex items-center gap-4">
+        <ConnectionStatus connection={connection} />
         <button
           onClick={onLogout}
           className="text-gray-400 hover:text-red-400 transition-colors cursor-pointer"

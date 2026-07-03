@@ -32,8 +32,13 @@ export default function App() {
     setFreezerToken(null);
   };
 
-  const { vans } = useSensorDataRealtime(token);
-  const { freezers } = useFreezerData(freezerToken);
+  const { vans, connected: vansConnected, error: vansError } = useSensorDataRealtime(token);
+  const { freezers, connected: freezersConnected, error: freezersError } = useFreezerData(freezerToken);
+
+  const connection = {
+    vans: { connected: vansConnected, error: vansError },
+    freezers: { connected: freezersConnected, error: freezersError, enabled: Boolean(freezerToken) },
+  };
 
   // Keep selections synced with latest data
   const currentSelectedVan = selectedVan
@@ -50,7 +55,7 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-full w-full bg-muted/30">
-      <Header activeTab={activeTab} onTabChange={setActiveTab} onLogout={handleLogout} />
+      <Header activeTab={activeTab} onTabChange={setActiveTab} onLogout={handleLogout} connection={connection} />
 
       <main className="flex-1 relative overflow-hidden">
         {/* Map always renders behind overlays */}
