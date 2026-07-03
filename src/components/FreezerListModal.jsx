@@ -216,7 +216,7 @@ export default function FreezerListModal({ freezers, token, onSelectFreezer, onS
                     </div>
 
                     {/* Status */}
-                    <StatusIndicator status={freezer.status} lastSeen={freezer.last_seen} />
+                    <StatusIndicator status={freezer.status} />
                   </button>
                 ))}
               </div>

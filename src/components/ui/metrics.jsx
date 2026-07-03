@@ -1,6 +1,5 @@
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { timeSince } from '@/lib/time';
 
 export function MetricCell({ value, unit, label, accentClass = 'text-emerald-600', accent = false, danger = false }) {
   return (
@@ -66,7 +65,7 @@ export function MiniMetric({ label, value, unit }) {
   );
 }
 
-export function StatusIndicator({ status, lastSeen }) {
+export function StatusIndicator({ status }) {
   const configs = {
     online: { variant: 'success', label: 'Online' },
     offline: { variant: 'danger', label: 'Offline' },
@@ -79,11 +78,6 @@ export function StatusIndicator({ status, lastSeen }) {
       <Badge variant={c.variant} className="text-[11px] px-2 py-0">
         {c.label}
       </Badge>
-      {status === 'offline' && lastSeen && (
-        <span className="text-[10px] text-red-400">
-          Last seen: {timeSince(lastSeen, { emptyText: '' })}
-        </span>
-      )}
       {status === 'attention' && (
         <span className="text-[10px] text-amber-500 flex items-center gap-1">
           <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse-dot" />

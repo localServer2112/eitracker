@@ -236,7 +236,7 @@ export default function VansListModal({ vans, token, onSelectVan, onSwitchToMap 
                     </div>
 
                     {/* Status */}
-                    <StatusIndicator status={van.status} lastSeen={van.last_seen} />
+                    <StatusIndicator status={van.status} />
                   </button>
                 ))}
               </div>
