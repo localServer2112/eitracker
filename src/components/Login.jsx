@@ -18,7 +18,7 @@ export default function Login({ onLogin }) {
       const API_BASE = import.meta.env.VITE_API_BASE || '/api/v1';
       const FREEZER_API_BASE = import.meta.env.VITE_FREEZER_API_BASE || '/freezer-api/v1';
 
-      const [vehicleRes, freezerRes] = await Promise.all([
+      const [vehicleResult, freezerResult] = await Promise.allSettled([
         fetch(`${API_BASE}/auth/login/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -31,6 +31,8 @@ export default function Login({ onLogin }) {
         }),
       ]);
 
+      if (vehicleResult.status === 'rejected') throw new Error('Cannot reach the server. Please try again.');
+      const vehicleRes = vehicleResult.value;
       if (!vehicleRes.ok) throw new Error('Invalid credentials');
 
       const vehicleData = await vehicleRes.json();
@@ -38,9 +40,9 @@ export default function Login({ onLogin }) {
       if (!vehicleToken) throw new Error('No token returned by the API');
 
       let freezerToken = null;
-      if (freezerRes.ok) {
-        const freezerData = await freezerRes.json();
-        freezerToken = freezerData.token || freezerData.key || null;
+      if (freezerResult.status === 'fulfilled' && freezerResult.value.ok) {
+        const freezerData = await freezerResult.value.json().catch(() => null);
+        freezerToken = freezerData?.token || freezerData?.key || null;
       }
 
       onLogin(vehicleToken, freezerToken);
